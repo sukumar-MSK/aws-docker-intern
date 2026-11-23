@@ -16,7 +16,7 @@ pipeline {
             steps {
                 sshagent(credentials: ['aws-ec2-key']) {
                     sh '''
-                        ssh -o StrictHostKeyChecking=no $EC2_HOST << 'EOF'
+                        ssh -o StrictHostKeyChecking=no -o BatchMode=yes -o ConnectTimeout=10 $EC2_HOST << 'EOF'
                             rm -rf aws-docker-intern
                             git clone https://github.com/sukumar-MSK/aws-docker-intern
                             cd aws-docker-intern
