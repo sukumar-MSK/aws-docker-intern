@@ -16,7 +16,8 @@ pipeline {
             steps {
                 sshagent(credentials: ['aws-ec2-key']) {
                     sh '''
-                        ssh -o StrictHostKeyChecking=no -o BatchMode=yes -o ConnectTimeout=10 $EC2_HOST << 'EOF'
+                        ssh -T -o StrictHostKeyChecking=no -o BatchMode=yes -o ConnectTimeout=10 $EC2_HOST << 'EOF'
+                            set -e
                             rm -rf aws-docker-intern
                             git clone https://github.com/sukumar-MSK/aws-docker-intern
                             cd aws-docker-intern
@@ -24,7 +25,7 @@ pipeline {
                             sudo docker stop internship-container || true
                             sudo docker rm internship-container || true
                             sudo docker run -d -p 80:80 --name internship-container my-internship-app:latest
-EOF
+                            EOF
                     '''
                 }
             }
