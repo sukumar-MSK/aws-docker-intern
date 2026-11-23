@@ -8,7 +8,7 @@ pipeline {
     stages {
         stage('1. Checkout Code') {
             steps {
-                git branch: 'main', url: 'https://github.com'
+                git branch: 'main', url: 'https://github.com/sukumar-MSK/aws-docker-intern'
             }
         }
 
@@ -18,7 +18,7 @@ pipeline {
                     sh '''
                         ssh -o StrictHostKeyChecking=no $EC2_HOST << 'EOF'
                             rm -rf aws-docker-intern
-                            git clone https://github.com
+                            git clone https://github.com/sukumar-MSK/aws-docker-intern
                             cd aws-docker-intern
                             sudo docker build -t my-internship-app:latest .
                             sudo docker stop internship-container || true
