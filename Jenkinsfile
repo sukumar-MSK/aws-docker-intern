@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        EC2_HOST = "3.111.33.137"
+        EC2_HOST = "ubuntu@3.111.33.137"
     }
 
     stages {
@@ -20,7 +20,7 @@ pipeline {
                             rm -rf aws-docker-intern
                             git clone https://github.com/sukumar-MSK/aws-docker-intern
                             cd aws-docker-intern
-                            sudo docker build -t my-internship-app:latest .
+                            sudo docker build -f docker-file-t my-internship-app:latest .
                             sudo docker stop internship-container || true
                             sudo docker rm internship-container || true
                             sudo docker run -d -p 80:80 --name internship-container my-internship-app:latest
