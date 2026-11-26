@@ -1,0 +1,50 @@
+pipeline {
+    agent any
+    options { timestamps(); disableConcurrentBuilds() }
+
+    environment {
+        AWS_REGION = 'ap-south-1'       // Change to your AWS region
+        AWS_ACCOUNT_ID = 'YOUR_12_DIGIT_ACCOUNT_ID'
+        ECR_REPOSITORY = 'frontend-repo'
+        IMAGE_TAG = "${BUILD_NUMBER}"
+    }
+
+    stages {
+        stage('Checkout') { steps { checkout scm } }
+
+        stage('Install and Build React') {
+            steps {
+                sh '''
+                    set -eu
+                    npm ci || npm install
+                    npm run build
+                '''
+            }
+        }
+
+        stage('Build and Push Frontend') {
+            steps {
+                withCredentials([[
+                    $class: 'AmazonWebServicesCredentialsBinding',
+                    credentialsId: 'aws-ecr-credentials'
+                ]]) {
+                    sh '''
+                        set -eu
+                        REGISTRY="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
+                        aws ecr get-login-password --region "$AWS_REGION" \
+                          | docker login --username AWS --password-stdin "$REGISTRY"
+                        docker build -t "$REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" .
+                        docker tag "$REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" \
+                          "$REGISTRY/$ECR_REPOSITORY:latest"
+                        docker push "$REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+                        docker push "$REGISTRY/$ECR_REPOSITORY:latest"
+                        docker logout "$REGISTRY"
+                    '''
+                }
+            }
+        }
+    }
+    post {
+        always { sh 'docker image prune -f || true' }
+    }
+}

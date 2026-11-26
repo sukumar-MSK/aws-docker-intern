@@ -1,0 +1,25 @@
+.env
+.venv/
+__pycache__/
+*.py[cod]
+*.db
+node_modules/
+dist/
+.DS_Store
+
+# Local projects and archives
+MotoGear/
+react-flask-login-ecr/
+*.zip
+
+# Environment and secrets
+.env
+*.pem
+*.key
+
+# Node and Python generated files
+node_modules/
+dist/
+.venv/
+__pycache__/
+*.pyc
