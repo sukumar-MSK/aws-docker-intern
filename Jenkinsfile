@@ -19,7 +19,7 @@ pipeline {
 
         EC2_HOST = '3.109.203.172'
         EC2_USER = 'ubuntu'
-        EC2_SSH_CREDENTIALS = 'EC2-SSH-key'
+        EC2_SSH_CREDENTIALS = 'EC2-SSH-PrivateKey'
         EC2_APP_DIR = '/home/ubuntu/docker-intern'
     }
 
@@ -314,7 +314,20 @@ REMOTE
                 }
             }
         }
+         stage('Test EC2 SSH') {
+        steps {
+            sshagent(credentials: ['EC2-SSH-PrivateKey']) {
+                sh '''
+                    ssh -o StrictHostKeyChecking=no \
+                        -o ConnectTimeout=15 \
+                        ubuntu@3.109.203.172 \
+                        "echo JENKINS_EC2_SSH_SUCCESS"
+                '''
+            }
+        }
     }
+}
+    
 
 
     post {
