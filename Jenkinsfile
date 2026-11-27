@@ -223,7 +223,7 @@ pipeline {
           frontend:
             image: ${REGISTRY}/${ECR_FRONTEND}:${IMAGE_TAG}
             pull_policy: always
-        EOF
+EOF
 
                         echo "Validating Docker Compose configuration..."
 
@@ -265,7 +265,7 @@ pipeline {
 
                         echo "EC2 DEPLOYMENT SUCCESSFUL!"
 
-        REMOTE
+REMOTE
                     '''
                 }
             }
@@ -311,3 +311,4 @@ pipeline {
             '''
         }
     }
+}
