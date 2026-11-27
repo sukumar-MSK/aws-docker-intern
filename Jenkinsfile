@@ -131,27 +131,7 @@ pipeline {
             }
         }
 
-        stage('Test EC2 SSH Credential') {
-            steps {
-                withCredentials([
-                    sshUserPrivateKey(
-                        credentialsId: 'EC2-SSH-PrivateKey',
-                        keyFileVariable: 'SSH_KEY',
-                        usernameVariable: 'SSH_USER'
-                    )
-                ]) {
-                    sh '''
-                        set -eu
-
-                        echo "SSH username credential loaded"
-
-                        test -s "$SSH_KEY"
-
-                        echo "SSH private key file loaded successfully"
-                    '''
-                }
-            }
-        }
+        
 
 
         
@@ -168,17 +148,21 @@ stage('9. Transfer Compose and ENV Files to EC2') {
                     set -eu
 
                     echo "STEP 1: Checking ENV file"
-                    ls -lh "$APP_ENV_FILE"
+                    test -s "$APP_ENV_FILE"
+                    echo "ENV file verified"
 
                     echo "STEP 2: Checking SSH"
                     timeout 20s ssh -o BatchMode=yes \
                       -o ConnectTimeout=10 \
                       -o ServerAliveInterval=5 \
+                      -o StrictHostKeyChecking=accept-new \
                       ${EC2_USER}@${EC2_HOST} \
                       "echo SSH_CONNECTION_SUCCESS"
 
                     echo "STEP 3: Creating directory"
                     timeout 20s ssh -o BatchMode=yes \
+                    -o ConnectTimeout=10 \
+                    -o StrictHostKeyChecking=accept-new \
                       ${EC2_USER}@${EC2_HOST} \
                       "mkdir -p ${EC2_APP_DIR}"
 
@@ -186,6 +170,7 @@ stage('9. Transfer Compose and ENV Files to EC2') {
                     timeout 30s scp -v \
                       -o BatchMode=yes \
                       -o ConnectTimeout=10 \
+                      -o StrictHostKeyChecking=accept-new \
                       docker-compose.yml \
                       ${EC2_USER}@${EC2_HOST}:${EC2_APP_DIR}/docker-compose.yml
 
@@ -193,11 +178,14 @@ stage('9. Transfer Compose and ENV Files to EC2') {
                     timeout 30s scp \
                       -o BatchMode=yes \
                       -o ConnectTimeout=10 \
+                      -o StrictHostKeyChecking=accept-new \
                       "$APP_ENV_FILE" \
                       ${EC2_USER}@${EC2_HOST}:${EC2_APP_DIR}/.env
 
                     echo "STEP 6: Setting permissions"
                     timeout 20s ssh -o BatchMode=yes \
+                    -o ConnectTimeout=10 \
+                    -o StrictHostKeyChecking=accept-new \
                       ${EC2_USER}@${EC2_HOST} \
                       "chmod 600 ${EC2_APP_DIR}/.env"
 
@@ -326,19 +314,7 @@ REMOTE
                 }
             }
         }
-         stage('Test EC2 SSH') {
-        steps {
-            sshagent(credentials: ['EC2-SSH-PrivateKey']) {
-                sh '''
-                    ssh -o StrictHostKeyChecking=no \
-                        -o ConnectTimeout=15 \
-                        ubuntu@3.109.203.172 \
-                        "echo JENKINS_EC2_SSH_SUCCESS"
-                '''
-            }
-        }
     }
-}
     
 
 
