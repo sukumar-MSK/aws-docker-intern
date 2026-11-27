@@ -131,6 +131,28 @@ pipeline {
             }
         }
 
+        stage('Test EC2 SSH Credential') {
+            steps {
+                withCredentials([
+                    sshUserPrivateKey(
+                        credentialsId: 'EC2-SSH-PrivateKey',
+                        keyFileVariable: 'SSH_KEY',
+                        usernameVariable: 'SSH_USER'
+                    )
+                ]) {
+                    sh '''
+                        set -eu
+
+                        echo "SSH username credential loaded"
+
+                        test -s "$SSH_KEY"
+
+                        echo "SSH private key file loaded successfully"
+                    '''
+                }
+            }
+        }
+
 
         stage('9. Transfer Compose and ENV Files to EC2') {
             steps {
