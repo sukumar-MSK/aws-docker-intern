@@ -154,48 +154,60 @@ pipeline {
         }
 
 
-        stage('9. Transfer Compose and ENV Files to EC2') {
-            steps {
-                sshagent(credentials: ['EC2-SSH-PrivateKey']) {
-                    withCredentials([
-                        file(
-                            credentialsId: 'app-env-file',
-                            variable: 'APP_ENV_FILE'
-                        )
-                    ]) {
-                        sh '''
-                            set -eu
+        
+stage('9. Transfer Compose and ENV Files to EC2') {
+    steps {
+        sshagent(credentials: ["${EC2_SSH_CREDENTIALS}"]) {
+            withCredentials([
+                file(
+                    credentialsId: 'app-env-file',
+                    variable: 'APP_ENV_FILE'
+                )
+            ]) {
+                sh '''
+                    set -eu
 
-                            echo "Creating EC2 application directory..."
+                    echo "STEP 1: Checking ENV file"
+                    ls -lh "$APP_ENV_FILE"
 
-                            ssh -o StrictHostKeyChecking=accept-new \
-                              ${EC2_USER}@${EC2_HOST} \
-                              "mkdir -p ${EC2_APP_DIR}"
+                    echo "STEP 2: Checking SSH"
+                    timeout 20s ssh -o BatchMode=yes \
+                      -o ConnectTimeout=10 \
+                      -o ServerAliveInterval=5 \
+                      ${EC2_USER}@${EC2_HOST} \
+                      "echo SSH_CONNECTION_SUCCESS"
 
-                            echo "Transferring docker-compose.yml..."
+                    echo "STEP 3: Creating directory"
+                    timeout 20s ssh -o BatchMode=yes \
+                      ${EC2_USER}@${EC2_HOST} \
+                      "mkdir -p ${EC2_APP_DIR}"
 
-                            scp -o StrictHostKeyChecking=accept-new \
-                              docker-compose.yml \
-                              ${EC2_USER}@${EC2_HOST}:${EC2_APP_DIR}/docker-compose.yml
+                    echo "STEP 4: Transferring Compose"
+                    timeout 30s scp -v \
+                      -o BatchMode=yes \
+                      -o ConnectTimeout=10 \
+                      docker-compose.yml \
+                      ${EC2_USER}@${EC2_HOST}:${EC2_APP_DIR}/docker-compose.yml
 
-                            echo "Transferring environment file..."
+                    echo "STEP 5: Transferring ENV"
+                    timeout 30s scp \
+                      -o BatchMode=yes \
+                      -o ConnectTimeout=10 \
+                      "$APP_ENV_FILE" \
+                      ${EC2_USER}@${EC2_HOST}:${EC2_APP_DIR}/.env
 
-                            scp -o StrictHostKeyChecking=accept-new \
-                              "$APP_ENV_FILE" \
-                              ${EC2_USER}@${EC2_HOST}:${EC2_APP_DIR}/.env
+                    echo "STEP 6: Setting permissions"
+                    timeout 20s ssh -o BatchMode=yes \
+                      ${EC2_USER}@${EC2_HOST} \
+                      "chmod 600 ${EC2_APP_DIR}/.env"
 
-                            echo "Setting environment file permissions..."
-
-                            ssh -o StrictHostKeyChecking=accept-new \
-                              ${EC2_USER}@${EC2_HOST} \
-                              "chmod 600 ${EC2_APP_DIR}/.env"
-
-                            echo "Compose and ENV files transferred successfully!"
-                        '''
-                    }
-                }
+                    echo "ALL FILE TRANSFERS SUCCESSFUL"
+                '''
             }
         }
+    }
+}
+
 
 
 
