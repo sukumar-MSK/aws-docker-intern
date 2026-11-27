@@ -134,7 +134,7 @@ pipeline {
 
         stage('9. Transfer Compose and ENV Files to EC2') {
             steps {
-                sshagent(credentials: ['EC2-SSH-Privatekey']) {
+                sshagent(credentials: ['EC2-SSH-PrivateKey']) {
                     withCredentials([
                         file(
                             credentialsId: 'app-env-file',
@@ -179,7 +179,7 @@ pipeline {
 
         stage('10. Pull Images and Deploy on EC2') {
             steps {
-                sshagent(credentials: ['EC2-SSH-Privatekey']) {
+                sshagent(credentials: ['EC2-SSH-PrivateKey']) {
                     sh '''
                         set -eu
 
